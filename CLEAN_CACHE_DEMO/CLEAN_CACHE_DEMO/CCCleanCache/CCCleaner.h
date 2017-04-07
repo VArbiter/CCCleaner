@@ -22,6 +22,9 @@ typedef void(^CCCompletionHandler)(CCCompletionStatus status , id item);
 
 + (instancetype) sharedCCCleaner ;
 
+/// 默认文件夹路径
+@property (nonatomic , strong) NSArray <NSString *> * arrayDefaultCacheFolder ;
+
 /// 清除指定路径组下的缓存 , nil 默认
 - (void) ccCleanCacheWithPath : (NSArray *) arrayPath
         withCompletionHandler : (CCCompletionHandler) handler;

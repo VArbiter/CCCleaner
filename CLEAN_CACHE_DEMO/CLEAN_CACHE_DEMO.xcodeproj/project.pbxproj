@@ -450,6 +450,7 @@
 				37B6131D1DDC094700222694 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
