@@ -28,7 +28,6 @@
 @interface CCCleaner ()
 
 @property (nonatomic , strong) NSFileManager * fileManager ;
-@property (nonatomic , strong) NSArray * arrayDefaultCacheFolder ;
 
 - (void) ccDefaultSettings ;
 
@@ -166,9 +165,7 @@
 
 /// 默认缓存文件夹 . 
 - (void) ccDefaultSettings {
-#warning TODO >>> 
-    /// 添加默认缓存文件架路径 . 
-    _arrayDefaultCacheFolder = @[];
+    [self arrayDefaultCacheFolder];
     _fileManager = [NSFileManager defaultManager];
 }
 
@@ -234,6 +231,13 @@
         }
     }
     return YES;
+}
+
+#pragma mark - Getter
+- (NSArray<NSString *> *)arrayDefaultCacheFolder {
+    if (_arrayDefaultCacheFolder) return _arrayDefaultCacheFolder;
+    _arrayDefaultCacheFolder = @[];
+    return _arrayDefaultCacheFolder;
 }
 
 - (void) dealloc {

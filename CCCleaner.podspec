@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   #
 
   s.name         = "CCCleaner"
-  s.version      = "1.0.0"
+  s.version      = "1.0.2"
   s.summary      = "A simple cleaner to get bundle cache size and erase them from disk or/and memory ."
 
   # This description is used to generate tags and improve search results.
