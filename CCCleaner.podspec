@@ -22,7 +22,7 @@ Pod::Spec.new do |s|
     s.source_files  = "CCCleaner", "CLEAN_CACHE_DEMO/CLEAN_CACHE_DEMO/CCCleanCache/*.{h,m}"
 
     s.requires_arc = true
-    s.dependency "SDWebImage" ,"~>3.8.2"
+    s.dependency "SDWebImage" 
 
 
 end
