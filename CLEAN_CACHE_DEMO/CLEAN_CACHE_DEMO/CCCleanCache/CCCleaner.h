@@ -25,6 +25,10 @@ typedef void(^CCCompletionHandler)(CCCompletionStatus status , id item);
 /// 默认文件夹路径
 @property (nonatomic , strong) NSArray <NSString *> * arrayDefaultCacheFolder ;
 
+/// 删除指定文件
+- (void) ccCleanChacheWithFullPath : (NSString *) stringFullPath
+             withCompletionHandler : (CCCompletionHandler) handler;
+
 /// 清除指定路径组下的缓存 , nil 默认
 - (void) ccCleanCacheWithPath : (NSArray *) arrayPath
         withCompletionHandler : (CCCompletionHandler) handler;
@@ -40,5 +44,8 @@ typedef void(^CCCompletionHandler)(CCCompletionStatus status , id item);
 
 /// 清除默认缓存文件夹的缓存 .
 - (void) ccStartCleanCacheWithCompletionHandler : (CCCompletionHandler) handler;
+
+/// 删除 UiWebView 和 WKWebView 的缓存
+- (void) ccCleanWebCache : (CCCompletionHandler) handler ;
 
 @end

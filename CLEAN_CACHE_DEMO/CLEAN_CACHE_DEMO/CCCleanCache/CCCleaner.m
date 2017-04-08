@@ -8,6 +8,8 @@
 
 #import "CCCleaner.h"
 
+#import <WebKit/WebKit.h>
+
 #if COCOAPODS
 #import <SDWebImage/SDImageCache.h>
 #else
@@ -37,6 +39,8 @@
 
 - (double) ccGetImageCacheWithIsNeedClean : (BOOL) isNeed ;
 
+- (double) ccGetWkWebCacheWithIsNeedClean : (BOOL) isNeed ;
+
 - (BOOL) ccDeleteAllFilesInFolder : (NSString *) stringFolderPath ;
 
 @end
@@ -50,6 +54,47 @@
         _cleaner = [[CCCleaner alloc] init];
     });
     return _cleaner;
+}
+
+- (void) ccCleanChacheWithFullPath : (NSString *) stringFullPath
+             withCompletionHandler : (CCCompletionHandler) handler {
+    CCCompletionStatus status = CCCompletionStatusFailed;
+    if (!stringFullPath || !stringFullPath.length) {
+        status = CCCompletionStatusError;
+        NSError *error = [NSError errorWithDomain:@"_CC_FILE_PATH_EMPTY_"
+                                             code:-10103
+                                         userInfo:nil];
+        if (handler) {
+            handler(status , error);
+        }
+        return;
+    }
+    BOOL isDirectory = NO;
+    if ([_fileManager fileExistsAtPath:stringFullPath isDirectory:&isDirectory]) {
+        NSError *error = nil;
+        if (!isDirectory) {
+            if (![_fileManager removeItemAtPath:stringFullPath error:&error]) {
+                if (error) {
+                    CC_CLEANER_LOG(@"%@",error);
+                }
+                if (handler) {
+                    handler(status , error);
+                }
+            } else {
+                status = CCCompletionStatusSucceed;
+                if (handler) {
+                    handler(status , nil);
+                }
+            }
+        } else {
+            error = [NSError errorWithDomain:@"_CC_FILE_PATH_IS_FOLDER_"
+                                        code:-10104
+                                    userInfo:nil];
+            if (handler) {
+                handler(status , error);
+            }
+        }
+    }
 }
 
 - (void) ccCleanCacheWithPath : (NSArray *) arrayPath
@@ -68,6 +113,7 @@
                                              code:-10102
                                          userInfo:nil];
         [self ccGetWebCacheWithIsNeedClean:YES];
+        [self ccGetWkWebCacheWithIsNeedClean:YES];
         [self ccGetImageCacheWithIsNeedClean:YES];
         if (handler) {
             handler(status , error);
@@ -85,6 +131,7 @@
         };
     }
     [self ccGetWebCacheWithIsNeedClean:YES];
+    [self ccGetWkWebCacheWithIsNeedClean:YES];
     [self ccGetImageCacheWithIsNeedClean:YES];
     if (handler) {
         handler(status , arrayFolderAlreadyCleaned);
@@ -122,6 +169,7 @@
         }
     }
     folderSize += [self ccGetWebCacheWithIsNeedClean:NO];
+    folderSize += [self ccGetWkWebCacheWithIsNeedClean:NO];
     folderSize += [self ccGetImageCacheWithIsNeedClean:NO];
     if (handler) {
         handler(status , @(folderSize));
@@ -152,6 +200,15 @@
 - (void) ccStartCleanCacheWithCompletionHandler : (CCCompletionHandler) handler{
     [self ccCleanCacheWithPath:_arrayDefaultCacheFolder
          withCompletionHandler:handler];
+}
+
+- (void) ccCleanWebCache : (CCCompletionHandler) handler {
+    double doubleTotalSize = .0f;
+    doubleTotalSize += [self ccGetWebCacheWithIsNeedClean:YES];
+    doubleTotalSize += [self ccGetWkWebCacheWithIsNeedClean:YES];
+    if (handler) {
+        handler(CCCompletionStatusSucceed ,  @(doubleTotalSize));
+    }
 }
 
 #pragma mark - Private method (s)
@@ -194,6 +251,50 @@
     } else {
         return urlCache.currentMemoryUsage + urlCache.currentDiskUsage;
     }
+}
+
+- (double) ccGetWkWebCacheWithIsNeedClean : (BOOL) isNeed {
+    NSString *stringLibraryPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory,
+                                                                       NSUserDomainMask,
+                                                                       YES) firstObject];
+    NSString *stringBundleId  =  [[[NSBundle mainBundle] infoDictionary]
+                                  objectForKey:@"CFBundleIdentifier"];
+    NSString *stringFolderInLib = [NSString stringWithFormat:@"%@/WebKit",stringLibraryPath];
+    NSString *stringFolderInCaches = [NSString
+                                      stringWithFormat:@"%@/Caches/%@/WebKit",stringLibraryPath,stringBundleId];
+    
+    double doubleTotalSize = [self ccGetCacheSizeWithFolderPath:@[stringFolderInCaches , stringFolderInLib]
+                                          withCompletionHandler:nil];
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 90000
+    if (isNeed) {
+        /*
+        //选择删除一些文件
+        NSSet *setDataTypes = [NSSet setWithArray:@[WKWebsiteDataTypeDiskCache,
+                                                    WKWebsiteDataTypeOfflineWebApplicationCache,
+                                                    WKWebsiteDataTypeMemoryCache,
+                                                    WKWebsiteDataTypeLocalStorage,
+                                                    WKWebsiteDataTypeCookies,
+                                                    WKWebsiteDataTypeSessionStorage,
+                                                    WKWebsiteDataTypeIndexedDBDatabases,
+                                                    WKWebsiteDataTypeWebSQLDatabases]];
+         */
+        // 删除所有缓存
+        NSSet *setDataTypes = [WKWebsiteDataStore allWebsiteDataTypes];
+        NSDate *dateFrom = [NSDate dateWithTimeIntervalSince1970:0];
+        [[WKWebsiteDataStore defaultDataStore] removeDataOfTypes:setDataTypes
+                                                   modifiedSince:dateFrom
+                                               completionHandler:^{/*Code*/}];
+    }
+#else
+    NSString *stringFolderInCachesfs = [NSString
+                                        stringWithFormat:@"%@/Caches/%@/fsCachedData",stringLibraryPath,stringBundleId];
+    doubleTotalSize += [self ccGetCacheSizeWithFolderPath:@[stringFolderInCachesfs]
+                                    withCompletionHandler:nil];
+    if (isNeed) {
+        [self ccDeleteAllFilesInFolder:stringFolderInCachesfs];
+    }
+#endif
+    return doubleTotalSize;
 }
 
 - (double) ccGetImageCacheWithIsNeedClean : (BOOL) isNeed {
