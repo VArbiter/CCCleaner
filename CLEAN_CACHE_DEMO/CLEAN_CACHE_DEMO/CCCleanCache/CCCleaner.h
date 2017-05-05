@@ -34,8 +34,8 @@ typedef void(^CCCompletionHandler)(CCCompletionStatus status , id item);
         withCompletionHandler : (CCCompletionHandler) handler;
 
 /// 获得指定路径组下文件总大小 , nil 默认
-- (double) ccGetCacheSizeWithFolderPath : (NSArray *) arrayPath
-                  withCompletionHandler : (CCCompletionHandler) handler;
+- (long double) ccGetCacheSizeWithFolderPath : (NSArray *) arrayPath
+                       withCompletionHandler : (CCCompletionHandler) handler;
 
 /// 用来显示指定路径组缓存占用多少空间 eg: @return 2.57 / 2.57M , nil 默认
 - (NSString *) ccStringGetCacheSizeWithFolderPath : (NSArray *) arrayPath

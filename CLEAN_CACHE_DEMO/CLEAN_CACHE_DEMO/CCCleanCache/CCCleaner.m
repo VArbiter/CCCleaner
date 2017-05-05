@@ -35,11 +35,11 @@
 
 - (long long) ccGetFileSizeWithPath : (NSString *) filePath ;
 
-- (double) ccGetWebCacheWithIsNeedClean : (BOOL) isNeed ;
+- (long double) ccGetWebCacheWithIsNeedClean : (BOOL) isNeed ;
 
-- (double) ccGetImageCacheWithIsNeedClean : (BOOL) isNeed ;
+- (long double) ccGetImageCacheWithIsNeedClean : (BOOL) isNeed ;
 
-- (double) ccGetWkWebCacheWithIsNeedClean : (BOOL) isNeed ;
+- (long double) ccGetWkWebCacheWithIsNeedClean : (BOOL) isNeed ;
 
 - (BOOL) ccDeleteAllFilesInFolder : (NSString *) stringFolderPath ;
 
@@ -138,7 +138,7 @@
     }
 }
 
-- (double) ccGetCacheSizeWithFolderPath : (NSArray *) arrayPath
+- (long double) ccGetCacheSizeWithFolderPath : (NSArray *) arrayPath
                   withCompletionHandler : (CCCompletionHandler) handler {
     CCCompletionStatus status = CCCompletionStatusFailed;
     if (!arrayPath || !arrayPath.count) {
@@ -158,7 +158,7 @@
         return 0;
     }
     
-    double folderSize = 0;
+    long double folderSize = 0;
     for (NSString *tempFolderPath in arrayPath) {
         if (![_fileManager fileExistsAtPath:tempFolderPath]) return 0;
         NSEnumerator *filesEnumerator = [[_fileManager subpathsAtPath:tempFolderPath] objectEnumerator];
@@ -172,7 +172,7 @@
     folderSize += [self ccGetWkWebCacheWithIsNeedClean:NO];
     folderSize += [self ccGetImageCacheWithIsNeedClean:NO];
     if (handler) {
-        handler(status , @(folderSize));
+        handler(status , @((NSUInteger)folderSize));
     }
     return (folderSize / 1024.0f / 1024.0f);
 }
@@ -180,9 +180,9 @@
 - (NSString *) ccStringGetCacheSizeWithFolderPath : (NSArray *) arrayPath
                                      withSizeUnit : (BOOL) isNeed
                             withCompletionHandler : (CCCompletionHandler) handler {
-    double folderSize = [self ccGetCacheSizeWithFolderPath:arrayPath
-                                     withCompletionHandler:nil];
-    NSString *stringCacheSize = [NSString stringWithFormat:@"%lf",folderSize];
+    long double folderSize = [self ccGetCacheSizeWithFolderPath:arrayPath
+                                          withCompletionHandler:nil];
+    NSString *stringCacheSize = [NSString stringWithFormat:@"%Lf",folderSize];
     NSArray *array = [stringCacheSize componentsSeparatedByString:@"."];
     NSString *stringSize = [NSString stringWithFormat:@"%@.%@%@" , [array firstObject] ,
                             [[array lastObject] substringToIndex:2] ,
@@ -203,11 +203,11 @@
 }
 
 - (void) ccCleanWebCache : (CCCompletionHandler) handler {
-    double doubleTotalSize = .0f;
+    long double doubleTotalSize = .0f;
     doubleTotalSize += [self ccGetWebCacheWithIsNeedClean:YES];
     doubleTotalSize += [self ccGetWkWebCacheWithIsNeedClean:YES];
     if (handler) {
-        handler(CCCompletionStatusSucceed ,  @(doubleTotalSize));
+        handler(CCCompletionStatusSucceed ,  @((NSUInteger)doubleTotalSize));
     }
 }
 
@@ -239,7 +239,7 @@
     return 0;
 }
 
-- (double) ccGetWebCacheWithIsNeedClean : (BOOL) isNeed {
+- (long double) ccGetWebCacheWithIsNeedClean : (BOOL) isNeed {
     NSURLCache *urlCache = [NSURLCache sharedURLCache];
     if (isNeed) {
         NSHTTPCookieStorage *cookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
@@ -253,7 +253,7 @@
     }
 }
 
-- (double) ccGetWkWebCacheWithIsNeedClean : (BOOL) isNeed {
+- (long double) ccGetWkWebCacheWithIsNeedClean : (BOOL) isNeed {
     NSString *stringLibraryPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory,
                                                                        NSUserDomainMask,
                                                                        YES) firstObject];
@@ -263,8 +263,20 @@
     NSString *stringFolderInCaches = [NSString
                                       stringWithFormat:@"%@/Caches/%@/WebKit",stringLibraryPath,stringBundleId];
     
-    double doubleTotalSize = [self ccGetCacheSizeWithFolderPath:@[stringFolderInCaches , stringFolderInLib]
-                                          withCompletionHandler:nil];
+    long double doublefolderSize = .0f;
+    NSEnumerator *filesEnumerator = [[_fileManager subpathsAtPath:stringFolderInLib] objectEnumerator];
+    NSString *fileName;
+    while ((fileName = [filesEnumerator nextObject]) != nil) {
+        NSString *filePath = [stringFolderInLib stringByAppendingPathComponent:fileName];
+        doublefolderSize += [self ccGetFileSizeWithPath:filePath];
+    }
+    
+    filesEnumerator = [[_fileManager subpathsAtPath:stringFolderInCaches] objectEnumerator];
+    while ((fileName = [filesEnumerator nextObject]) != nil) {
+        NSString *filePath = [stringFolderInCaches stringByAppendingPathComponent:fileName];
+        doublefolderSize += [self ccGetFileSizeWithPath:filePath];
+    }
+    
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 90000
     if (isNeed) {
         /*
@@ -288,16 +300,20 @@
 #else
     NSString *stringFolderInCachesfs = [NSString
                                         stringWithFormat:@"%@/Caches/%@/fsCachedData",stringLibraryPath,stringBundleId];
-    doubleTotalSize += [self ccGetCacheSizeWithFolderPath:@[stringFolderInCachesfs]
-                                    withCompletionHandler:nil];
+    filesEnumerator = [[_fileManager subpathsAtPath:stringFolderInCachesfs] objectEnumerator];
+    while ((fileName = [filesEnumerator nextObject]) != nil) {
+        NSString *filePath = [stringFolderInCachesfs stringByAppendingPathComponent:fileName];
+        doublefolderSize += [self ccGetFileSizeWithPath:filePath];
+    }
+    
     if (isNeed) {
         [self ccDeleteAllFilesInFolder:stringFolderInCachesfs];
     }
 #endif
-    return doubleTotalSize;
+    return doublefolderSize;
 }
 
-- (double) ccGetImageCacheWithIsNeedClean : (BOOL) isNeed {
+- (long double) ccGetImageCacheWithIsNeedClean : (BOOL) isNeed {
     SDImageCache *imageCache = [SDImageCache sharedImageCache];
     if (isNeed) {
         [imageCache clearMemory];
