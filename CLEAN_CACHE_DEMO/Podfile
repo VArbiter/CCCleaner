@@ -1,0 +1,8 @@
+platform :ios, '8.0'
+
+target 'CLEAN_CACHE_DEMO' do
+  use_frameworks!
+
+  pod 'SDWebImage', '~> 4.1.0'
+
+end
