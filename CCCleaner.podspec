@@ -25,5 +25,7 @@ Pod::Spec.new do |s|
 
     s.requires_arc = true
     s.dependency 'SDWebImage' , '~> 4.1.0'
+    s.deprecated = true
+    s.deprecated_in_favor_of = 'CCExtensionKit'
 
 end
